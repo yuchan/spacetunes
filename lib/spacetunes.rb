@@ -1,7 +1,8 @@
 require "spacetunes/version"
+require "spaceship"
+require "redcarpet"
 
 module Spacetunes
-  # Your code goes here...
   class Review
     attr_accessor :ratings
 
@@ -10,22 +11,34 @@ module Spacetunes
       5.times do
         @ratings.push(Rating.new)
       end
-    end
 
-    def prepareVersion(version)
-      @ratings.each do |rating|
-        rating.prepareVersion(version)
+      Spaceship::Tunes.login
+      all_apps = Spaceship::Tunes::Application.all
+      app = all_apps[0]
+      app.ratings.versions.sort{|(k1,v1), (k2,v2)| k2.to_i <=> k1.to_i }.each do |k, v|
+        reviews = app.ratings.reviews("JP", k)
+
+        @ratings.each do |rating|
+          rating.prepareVersion(v)
+        end
+
+        reviews.each do |review|
+          stars = ""
+          review["rating"].to_i.times do
+            stars += "\u{1f4a9} "
+          end
+
+          @ratings[review["rating"].to_i - 1].process(v, stars, review["title"], review["review"])
+        end
       end
-    end
-
-    def process(rate, version, rating, title, text)
-      @ratings[rate].process(version, rating, title, text)
     end
 
     def generate(rate)
       @ratings[rate].generate(rate)
     end
-    
+
+    private
+
     class Rating
       attr_accessor :count
       attr_accessor :reviews
