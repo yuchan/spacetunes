@@ -1,0 +1,32 @@
+require 'spaceship'
+require 'redcarpet'
+require 'spacetunes'
+
+Spaceship::Tunes.login
+all_apps = Spaceship::Tunes::Application.all
+app = all_apps[0]
+
+links = ""
+rating_data = Spacetunes::Review.new
+
+app.ratings.versions.sort{|(k1,v1), (k2,v2)| k2.to_i <=> k1.to_i }.each do |k, v|
+  reviews = app.ratings.reviews("JP", k)
+  rating_data.prepareVersion(v)
+  reviews.each do |review|
+    stars = ""
+    review["rating"].times do
+      stars += "\u{1f4a9} "
+    end
+
+    rating_data.process(review["rating"].to_i - 1, v, stars, review["title"], review["review"])
+  end
+end
+
+markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML, autolink: true, tables: true)
+
+5.times do |i|
+  source = rating_data.generate(i)
+  html = markdown.render(source)
+  File.open("./review_#{i+1}.md", 'w') { |file| file.write(source) }
+  File.open("./review_#{i+1}.html", 'w') { |file| file.write(html) }
+end
