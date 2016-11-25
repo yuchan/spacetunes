@@ -64,7 +64,7 @@ module Spacetunes
         text = ""
         links = ""
         @reviews.each do |k, review|
-          text += "## <a name=\"#{k}\"></a>" + k + "'s #{rate}-star reviews\n"
+          text += "## <a name=\"#{k}\"></a>" + k + "'s #{rate + 1}-star reviews\n"
           links += "- [#{k}(#{review.count})](##{k})\n"
           review.each do |rev|
             text += "### " + rev.title + "\n\n"
