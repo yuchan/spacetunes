@@ -4,37 +4,34 @@ require "redcarpet"
 
 module Spacetunes
   class Review
+    attr_accessor :app
     attr_accessor :ratings
 
     def initialize()
-      @ratings = []
-      5.times do
-        @ratings.push(Rating.new)
-      end
-
       Spaceship::Tunes.login
       all_apps = Spaceship::Tunes::Application.all
-      app = all_apps[0]
-      app.ratings.versions.sort{|(k1,v1), (k2,v2)| k2.to_i <=> k1.to_i }.each do |k, v|
-        reviews = app.ratings.reviews("JP", k)
+      @app = all_apps[0]
+    end
 
-        @ratings.each do |rating|
+    def generate(rate)
+      ratings = []
+      5.times do
+        ratings.push(Rating.new)
+      end
+
+      @app.ratings.versions.sort{|(k1,v1), (k2,v2)| k2.to_i <=> k1.to_i }.each do |k, v|
+        reviews = @app.ratings.reviews("JP", k)
+
+        ratings.each do |rating|
           rating.prepareVersion(v)
         end
 
         reviews.each do |review|
-          stars = ""
-          review["rating"].to_i.times do
-            stars += "\u{1f4a9} "
-          end
-
-          @ratings[review["rating"].to_i - 1].process(v, stars, review["title"], review["review"])
+          ratings[review["rating"].to_i - 1].process(v, review["rating"], review["title"], review["review"])
         end
       end
-    end
 
-    def generate(rate)
-      @ratings[rate].generate(rate)
+      ratings[rate].generate(rate)
     end
 
     private
@@ -82,7 +79,12 @@ module Spacetunes
       attr_accessor :text
 
       def initialize(rating, title, text)
-        @rating = rating
+        stars = ""
+        rating.to_i.times do
+          stars += "\u{1f4a9} "
+        end
+
+        @rating = stars
         @text = text
         @title = title
       end
